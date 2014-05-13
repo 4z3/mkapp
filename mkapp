@@ -28,6 +28,7 @@ loader() {
   loader=$(basename $1)
   mkindex $loader > index
   chmod +x index
+  chmod -R a-w .
   cd -
 }
 mkindex() {
