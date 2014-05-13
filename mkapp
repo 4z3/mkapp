@@ -69,7 +69,7 @@ loader() {
   mkindex $loader > index
   '"$CHMOD"' +x index
   '"$CHMOD"' -R a-w .
-  cd -
+  cd "$OLDPWD"
 }
 mkindex() {
   echo "#! /bin/sh"
