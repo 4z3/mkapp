@@ -1,14 +1,14 @@
 #! /bin/sh
 set -euf
 
-# TODO if called with two args, then generate appdir called $2
-
 exe=$1
 name=$(basename $exe)
+appdir=${2-$name}
+
 echo '#! /bin/sh
 set -euf
 main() {
-  mkapp '$name''
+  mkapp '$appdir''
 
 ldd $exe | sed -n '
   s/[[:space:]]\+/ /g
