@@ -2,11 +2,12 @@
 set -euf
 
 strip=false
+verbose=false
 
 while test $# -gt 0; do
   case $1 in
-    --strip)
-      strip=true
+    --strip|--verbose)
+      eval "${1:2}=true"
       shift
       ;;
     -*)
@@ -23,6 +24,21 @@ exe=$1
 name=$(basename $exe)
 appdir=${2-$name}
 
+case $verbose in
+  true)
+    MKDIR='mkdir -v'
+    CP='cp -v'
+    CHMOD='chmod -v'
+    STRIP='strip -v'
+    ;;
+  *)
+    MKDIR=mkdir
+    CP=cp
+    CHMOD=chmod
+    STRIP=strip
+    ;;
+esac
+
 echo '#! /bin/sh
 set -euf
 main() {
@@ -37,22 +53,22 @@ ldd $exe | sed -n '
 echo '}
 mkapp() {
   app=$1
-  mkdir $app
-  cp '$exe' $app
+  '"$MKDIR"' $app
+  '"$CP"' '$exe' $app
   cd $app
 }
-lib() { cp -L $1 $2; }
+lib() { '"$CP"' -L $1 $2; }
 loader() {
-  cp -L $1 .
+  '"$CP"' -L $1 .
   case $strip in
     true)
-      ls | xargs chmod u+w
-      ls | xargs strip -p --strip-unneeded
+      ls | xargs '"$CHMOD"' u+w
+      ls | xargs '"$STRIP"' -p --strip-unneeded
   esac
   loader=$(basename $1)
   mkindex $loader > index
-  chmod +x index
-  chmod -R a-w .
+  '"$CHMOD"' +x index
+  '"$CHMOD"' -R a-w .
   cd -
 }
 mkindex() {
