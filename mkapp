@@ -1,6 +1,24 @@
 #! /bin/sh
 set -euf
 
+strip=false
+
+while test $# -gt 0; do
+  case $1 in
+    --strip)
+      strip=true
+      shift
+      ;;
+    -*)
+      echo "unknown option: $1" >&2
+      exit 23
+      ;;
+    *)
+      break
+      ;;
+  esac
+done
+
 exe=$1
 name=$(basename $exe)
 appdir=${2-$name}
@@ -8,6 +26,7 @@ appdir=${2-$name}
 echo '#! /bin/sh
 set -euf
 main() {
+  strip='$strip'
   mkapp '$appdir''
 
 ldd $exe | sed -n '
@@ -25,6 +44,11 @@ mkapp() {
 lib() { cp -L $1 $2; }
 loader() {
   cp -L $1 .
+  case $strip in
+    true)
+      ls | xargs chmod u+w
+      ls | xargs strip -p --strip-unneeded
+  esac
   loader=$(basename $1)
   mkindex $loader > index
   chmod +x index
