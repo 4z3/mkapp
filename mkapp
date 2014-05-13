@@ -1,0 +1,40 @@
+#! /bin/sh
+set -euf
+
+# TODO if called with two args, then generate appdir called $2
+
+exe=$1
+name=$(basename $exe)
+echo '#! /bin/sh
+set -euf
+main() {
+  mkapp '$name''
+
+ldd $exe | sed -n '
+  s/[[:space:]]\+/ /g
+  s@^ \([^ ]\+\) => \(/[^ ]\+\) (.*)$@#1lib \2 \1@p
+  s@^ \(/[^ ]\+\) (.*)$@#2loader \1@p
+' | sort | sed 's/#[0-9]/  /'
+echo '}
+mkapp() {
+  app=$1
+  mkdir $app
+  cp '$exe' $app
+  cd $app
+}
+lib() { cp -L $1 $2; }
+loader() {
+  cp -L $1 .
+  loader=$(basename $1)
+  mkindex $loader > index
+  chmod +x index
+  cd -
+}
+mkindex() {
+  echo "#! /bin/sh"
+  echo "set -euf"
+  echo "app=\$(dirname \$0)"
+  echo "echo \$app"
+  echo "exec \$app/$1 --library-path \$app \$app/'$name' \"\$@\""
+}
+main "$@"'
